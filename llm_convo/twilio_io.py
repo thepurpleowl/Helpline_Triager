@@ -35,9 +35,9 @@ class TwilioServer:
         self.server_thread = threading.Thread(target=self._start)
         self.on_session = None
 
-        account_sid = os.environ["TWILIO_ACCOUNT_SID"]
-        auth_token = os.environ["TWILIO_AUTH_TOKEN"]
-        self.from_phone = os.environ["TWILIO_PHONE_NUMBER"]
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        self.from_phone = os.getenv("TWILIO_PHONE_NUMBER")
         self.client = Client(account_sid, auth_token)
 
         @self.app.route("/audio/<key>")
@@ -88,10 +88,10 @@ class TwilioCallSession:
             try:
                 message = self.ws.receive()
             except simple_websocket.ws.ConnectionClosed:
-                logging.warn("Call media stream connection lost.")
+                logging.warning("Call media stream connection lost.")
                 break
             if message is None:
-                logging.warn("Call media stream closed.")
+                logging.warning("Call media stream closed.")
                 break
 
             data = json.loads(message)

@@ -2,10 +2,14 @@ from gevent import monkey
 
 monkey.patch_all()
 
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+load_dotenv(f"{Path(os.path.dirname(__file__)).parent}/keys.env")
+
 import logging
 import argparse
 import tempfile
-import os
 import time
 from llm_convo.agents import OpenAIChat, TwilioCaller
 from llm_convo.audio_input import get_whisper_model
@@ -16,8 +20,9 @@ from pyngrok import ngrok
 
 def main(port, remote_host, start_ngrok):
     if start_ngrok:
-        ngrok_http = ngrok.connect(port)
+        ngrok_http = ngrok.connect(port, domain=remote_host)
         remote_host = ngrok_http.public_url.split("//")[1]
+        logging.info(f"ngrok tunnel: {ngrok_http.public_url}")
 
     static_dir = os.path.join(tempfile.gettempdir(), "twilio_static")
     os.makedirs(static_dir, exist_ok=True)
@@ -47,7 +52,11 @@ if __name__ == "__main__":
     parser.add_argument("--preload_whisper", action="store_true")
     parser.add_argument("--start_ngrok", action="store_true")
     parser.add_argument("--port", type=int, default=8080)
-    parser.add_argument("--remote_host", type=str, default="localhost")
+    parser.add_argument("--remote_host", type=str,
+                        default=(os.getenv("NGROK_DOMAIN")
+                                 if os.getenv("NGROK_DOMAIN")
+                                 else "localhost")
+                        )
     args = parser.parse_args()
     if args.preload_whisper:
         get_whisper_model()

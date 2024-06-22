@@ -2,6 +2,11 @@ from gevent import monkey
 
 monkey.patch_all()
 
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+load_dotenv(f"{Path(os.path.dirname(__file__)).parent}/keys.env")
+
 import logging
 import argparse
 import tempfile

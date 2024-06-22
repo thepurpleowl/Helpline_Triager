@@ -2,7 +2,7 @@ from typing import List, Optional
 import os
 import openai
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 class OpenAIChatCompletion:
