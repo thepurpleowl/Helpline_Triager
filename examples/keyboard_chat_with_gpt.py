@@ -17,7 +17,7 @@ def main(model):
         model=model,
     )
     agent_b = TerminalInPrintOut()
-    run_conversation(agent_a, agent_b)
+    run_conversation(agent_a, agent_b, None)
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ import simple_websocket
 import audioop
 
 from llm_convo.audio_input import WhisperTwilioStream
+from llm_convo.openai_io import OpenAIChatCompletion
 
 
 XML_MEDIA_STREAM = """
@@ -35,6 +36,22 @@ class TwilioServer:
         self.server_thread = threading.Thread(target=self._start)
         self.on_session = None
 
+        self.entities = {}
+        self.entity_agent = OpenAIChatCompletion(
+            system_prompt="""You are an entity extractor.
+                Given some text return the following entities in the text in the following key value in json format.
+                {
+                    helpline: helpline value,
+                    distress: distress value,
+                    caller_name: caller_name value,
+                    location: location,
+                    time: time,
+                    description: description
+                }
+
+                If some information is not available, fill the value with NA.""",
+        )
+
         account_sid = os.getenv("TWILIO_ACCOUNT_SID")
         auth_token = os.getenv("TWILIO_AUTH_TOKEN")
         self.from_phone = os.getenv("TWILIO_PHONE_NUMBER")
@@ -52,7 +69,7 @@ class TwilioServer:
         def on_media_stream(ws):
             session = TwilioCallSession(ws, self.client, remote_host=self.remote_host, static_dir=self.static_dir)
             if self.on_session is not None:
-                thread = threading.Thread(target=self.on_session, args=(session,))
+                thread = threading.Thread(target=self.on_session, args=(session, self))
                 thread.start()
             session.start_session()
 
