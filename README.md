@@ -1,21 +1,22 @@
-# llm_convo
+# Helpline_Triager
 
-Use ChatGPT over Twilio to create an AI phone agent (works for incoming or outgoing calls).
+Use ChatGPT over Twilio to create an AI phone agent to redirect distress calls to relevant helpline.
 
 ### How it works
 
 Twilio Webhook -> Flask app -> Twilio Media Stream (websocket) -> Whisper -> ChatGPT API -> Google TTS -> Twilio Play Audio
 
-### Setup
+### How to use
 
-1. `pip install git+https://github.com/sshh12/llm_convo`
-2. Environment Variables
+1. `pip install -r requirements.txt`
+2. Set environment variables in `keys.env` file
 
 ```
 OPENAI_API_KEY=
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_PHONE_NUMBER=
+NGROK_DOMAIN=localhost
 ```
 
 
