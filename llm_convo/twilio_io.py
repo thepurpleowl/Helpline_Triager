@@ -54,6 +54,9 @@ class TwilioServer:
         self.call_end_agent = OpenAIChatCompletion(
             system_prompt="""You are an experienced telephone operator. Given some text, determine if the call has ended or not. Answer only 'yes' or 'no'"""
         )
+        self.summarize_agent = OpenAIChatCompletion(
+            system_prompt="""You are an experienced writer. Given some key value pair regarding some distress call, summarize a short paragraph about the call."""
+        )
 
         account_sid = os.getenv("TWILIO_ACCOUNT_SID")
         auth_token = os.getenv("TWILIO_AUTH_TOKEN")
