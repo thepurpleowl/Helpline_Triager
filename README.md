@@ -1,6 +1,10 @@
-# Helpline_Triager
+# Helpline Triager
 
 Use ChatGPT over Twilio to create an AI phone agent to redirect distress calls to relevant helpline.
+
+While reporting or seeking help in a distress situations, finding the appropriate help can be challenging. This project aims to streamline the process by providing a single helpline number that redirects caller-provided information to the relevant helpline.
+Such an approach address common obstacles faced during distress situations such as lack of internet access, reluctance to self-identify, and the precious time-consuming task of locating the correct helpline number. 
+By offering a centralized and user-friendly solution, this project aims to facilitate prompt access to the necessary support during times of distress.
 
 ### How it works
 
@@ -15,27 +19,19 @@ Twilio Webhook -> Flask app -> Twilio Media Stream (websocket) -> Whisper -> Cha
 OPENAI_API_KEY=
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
-TWILIO_PHONE_NUMBER=
+TWILIO_PHONE_NUMBER=+1...
 NGROK_DOMAIN=localhost
+HELPLINES={'health': '+91...', 'fire': '', 'police': '', 'ambulance': ''}
+REGISTERED_CONTACT='+91...'
 ```
 
+Run `PYTHONPATH=. python examples/twilio_triage_receiver.py --preload_whisper --start_ngrok`. 
 
-### Demo
+Note: This requires whisper installed locally. This will create an ngrok tunnel and provide a webhook URL to point to in Twilio settings for a purchased phone number. 
 
-#### Basic Text Chat
+The server is now ready to receive calls. When someone calls the `TWILIO_PHONE_NUMBER`, based on the conversation the call will be redirected to the available helpline number provided in `HELPLINES`. Additionally, a message is also sent.
 
-Try `PYTHONPATH=. python examples/keyboard_chat_with_gpt.py` to chat with GPT through terminal.
-
-#### Twilio Helpline Receiver
-
-Try `PYTHONPATH=. python examples/twilio_triage_receiver.py --preload_whisper --start_ngrok`. This requires whisper installed locally.
-
-This will create an ngrok tunnel and provide a webhook URL to point to in Twilio settings for a purchased phone number.
-
-<img width="1169" alt="chrome_VZSfJHN6FV" src="https://github.com/sshh12/llm_convo/assets/6625384/1fe9468d-0eb3-4309-9b81-1d2f3d02c353">
-
-#### Twilio Helpline Caller
-
-Try `PYTHONPATH=. python examples/twilio_triage_caller.py --preload_whisper --start_ngrok --phone_number "+1.........."`. This requires whisper installed locally.
-
-This will create an ngrok tunnel and provide a webhook URL to point to in Twilio settings for a purchased phone number. Once the webhook is updated, it will start an outgoing call to the provided phone number.
+### Note
+- You can use [twilio dev-phone](https://www.twilio.com/docs/labs/dev-phone) to test the application without using a real phone number.
+- `REGISTERED_CONTACT` can be another twilio number or a real phone number. This number will receive a message/call when the call is redirected.
+- This server endpoint can be extended to be used with widget, gestures, or other input methods to avoid explicit calling. Such use of this endpoint can be crucial save precious time in distress situations.
