@@ -35,3 +35,17 @@ class OpenAIChatCompletion:
             messages=messages,
         )
         return output["choices"][0]["message"]["content"]
+
+    def is_call_end(self, transcript: List[str]) -> str:
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+        ]
+        whole_text = '\n'.join(transcript)
+        messages.append({"role": "user",
+                         "content": f"Text: {whole_text}"})
+
+        output = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo" if self.model is None else self.model,
+            messages=messages,
+        )
+        return output["choices"][0]["message"]["content"]

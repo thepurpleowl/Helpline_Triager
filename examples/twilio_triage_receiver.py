@@ -5,6 +5,7 @@ monkey.patch_all()
 from dotenv import load_dotenv
 from pathlib import Path
 import os
+
 load_dotenv(f"{Path(os.path.dirname(__file__)).parent}/keys.env")
 
 import logging
@@ -17,7 +18,6 @@ from llm_convo.agents import OpenAIChat, TwilioCaller
 from llm_convo.audio_input import get_whisper_model
 from llm_convo.twilio_io import TwilioServer
 from llm_convo.conversation import run_conversation
-from twilio_triage_caller import main_caller
 
 
 def main(port, remote_host, start_ngrok, phone_number):
@@ -45,12 +45,17 @@ def main(port, remote_host, start_ngrok, phone_number):
         agent_b = TwilioCaller(sess, thinking_phrase="One moment.")
         while not agent_b.session.media_stream_connected():
             time.sleep(0.1)
-        run_conversation(agent_a, agent_b, tws)
+        run_conversation(agent_a, agent_b, tws,
+                         {
+                             "port": port,
+                             "remote_host": remote_host,
+                             "start_ngrok": start_ngrok,
+                             "phone_number": phone_number
+                         })
 
     tws.on_session = run_chat
     logging.info("Call ended")
 
-    main_caller(port, remote_host, start_ngrok, phone_number)
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
