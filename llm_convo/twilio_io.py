@@ -13,6 +13,7 @@ import simple_websocket
 import audioop
 
 from llm_convo.audio_input import WhisperTwilioStream
+from llm_convo.openai_io import OpenAIChatCompletion
 
 
 XML_MEDIA_STREAM = """
@@ -35,9 +36,31 @@ class TwilioServer:
         self.server_thread = threading.Thread(target=self._start)
         self.on_session = None
 
-        account_sid = os.environ["TWILIO_ACCOUNT_SID"]
-        auth_token = os.environ["TWILIO_AUTH_TOKEN"]
-        self.from_phone = os.environ["TWILIO_PHONE_NUMBER"]
+        self.entities = {}
+        self.entity_agent = OpenAIChatCompletion(
+            system_prompt="""You are an entity extractor.
+                Given some text return the following entities in the text in the following key value in json format.
+                {
+                    helpline: helpline value,
+                    distress: distress value,
+                    caller_name: caller_name value,
+                    location: location,
+                    time: time,
+                    description: description
+                }
+
+                If some information is not available, fill the value with NA.""",
+        )
+        self.call_end_agent = OpenAIChatCompletion(
+            system_prompt="""You are an experienced telephone operator. Given some text, determine if the call has ended or not. Answer only 'yes' or 'no'"""
+        )
+        self.summarize_agent = OpenAIChatCompletion(
+            system_prompt="""You are an experienced writer. Given some key value pair regarding some distress call, summarize a short paragraph about the call."""
+        )
+
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        self.from_phone = os.getenv("TWILIO_PHONE_NUMBER")
         self.client = Client(account_sid, auth_token)
 
         @self.app.route("/audio/<key>")
@@ -52,7 +75,7 @@ class TwilioServer:
         def on_media_stream(ws):
             session = TwilioCallSession(ws, self.client, remote_host=self.remote_host, static_dir=self.static_dir)
             if self.on_session is not None:
-                thread = threading.Thread(target=self.on_session, args=(session,))
+                thread = threading.Thread(target=self.on_session, args=(session, self))
                 thread.start()
             session.start_session()
 
@@ -88,10 +111,10 @@ class TwilioCallSession:
             try:
                 message = self.ws.receive()
             except simple_websocket.ws.ConnectionClosed:
-                logging.warn("Call media stream connection lost.")
+                logging.warning("Call media stream connection lost.")
                 break
             if message is None:
-                logging.warn("Call media stream closed.")
+                logging.warning("Call media stream closed.")
                 break
 
             data = json.loads(message)

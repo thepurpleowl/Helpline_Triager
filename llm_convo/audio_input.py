@@ -11,7 +11,7 @@ import whisper
 
 
 @functools.cache
-def get_whisper_model(size: str = "large"):
+def get_whisper_model(size: str = "tiny"):
     logging.info(f"Loading whisper {size}")
     return whisper.load_model(size)
 

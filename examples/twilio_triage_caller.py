@@ -2,6 +2,11 @@ from gevent import monkey
 
 monkey.patch_all()
 
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+load_dotenv(f"{Path(os.path.dirname(__file__)).parent}/keys.env")
+
 import logging
 import argparse
 import tempfile
@@ -15,10 +20,11 @@ from llm_convo.conversation import run_conversation
 from pyngrok import ngrok
 
 
-def main(port, remote_host, start_ngrok, phone_number):
+def main_caller(port, remote_host, start_ngrok, phone_number):
     if start_ngrok:
-        ngrok_http = ngrok.connect(port)
+        ngrok_http = ngrok.connect(port, domain=remote_host)
         remote_host = ngrok_http.public_url.split("//")[1]
+        logging.info(f"ngrok tunnel public url: {ngrok_http.public_url}")
 
     static_dir = os.path.join(tempfile.gettempdir(), "twilio_static")
     os.makedirs(static_dir, exist_ok=True)
@@ -34,24 +40,25 @@ def main(port, remote_host, start_ngrok, phone_number):
     tws.start()
     agent_a = OpenAIChat(
         system_prompt="""
-    You are an ordering bot that is going to call a pizza place an order a pizza.
-    When you need to say numbers space them out (e.g. 1 2 3) and do not respond with abbreviations.
-    If they ask for information not known, make something up that's reasonable.
+    You are a distress call handler. You are responsible for informing the {helpline} helpline with following possible distress details.
+    Keep in mind that you are making this call on behalf of another caller. If they ask for information not known, make use of following details.
 
-    The customer's details are:
-    * Address: 1234 Candyland Road, Apt 506
-    * Credit Card: 1234 5555 8888 9999 (CVV: 010)
-    * Name: Bob Joe
-    * Order: 1 large pizza with only pepperoni
+    Available helpline and distress details are:
+    * Helpline type: {helpline}
+    * Incident type: {distress}
+    * Caller Name: {name}
+    * Incident location: {location}
+    * Incident time: {time}
+    * Incident description: {description}
     """,
-        init_phrase="Hi, I would like to order a pizza.",
+        init_phrase="Hi, I want to report a incident.",
     )
 
-    def run_chat(sess):
+    def run_chat(sess, tws: TwilioServer):
         agent_b = TwilioCaller(sess, thinking_phrase="One moment.")
         while not agent_b.session.media_stream_connected():
             time.sleep(0.1)
-        run_conversation(agent_a, agent_b)
+        run_conversation(agent_a, agent_b, tws)
         sys.exit(0)
 
     tws.on_session = run_chat
@@ -69,4 +76,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.preload_whisper:
         get_whisper_model()
-    main(args.port, args.remote_host, args.start_ngrok, args.phone_number)
+    main_caller(args.port, args.remote_host, args.start_ngrok, args.phone_number)
