@@ -20,7 +20,7 @@ from llm_convo.twilio_io import TwilioServer
 from llm_convo.conversation import run_conversation
 
 
-def main(port, remote_host, start_ngrok, phone_number):
+def main(port, remote_host, start_ngrok):
     if start_ngrok:
         ngrok_http = ngrok.connect(port, domain=remote_host)
         remote_host = ngrok_http.public_url.split("//")[1]
@@ -45,13 +45,7 @@ def main(port, remote_host, start_ngrok, phone_number):
         agent_b = TwilioCaller(sess, thinking_phrase="One moment.")
         while not agent_b.session.media_stream_connected():
             time.sleep(0.1)
-        run_conversation(agent_a, agent_b, tws,
-                         {
-                             "port": port,
-                             "remote_host": remote_host,
-                             "start_ngrok": start_ngrok,
-                             "phone_number": phone_number
-                         })
+        run_conversation(agent_a, agent_b, tws)
 
     tws.on_session = run_chat
     logging.info("Call ended")
@@ -60,7 +54,6 @@ def main(port, remote_host, start_ngrok, phone_number):
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     parser = argparse.ArgumentParser()
-    parser.add_argument("--phone_number", type=str)
     parser.add_argument("--preload_whisper", action="store_true")
     parser.add_argument("--start_ngrok", action="store_true")
     parser.add_argument("--port", type=int, default=8080)
@@ -72,4 +65,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.preload_whisper:
         get_whisper_model()
-    main(args.port, args.remote_host, args.start_ngrok, args.phone_number)
+    main(args.port, args.remote_host, args.start_ngrok)

@@ -8,7 +8,7 @@ from llm_convo.agents import ChatAgent
 from llm_convo.twilio_io import TwilioServer
 
 
-def run_conversation(agent_a: ChatAgent, agent_b: ChatAgent, tws: Optional[TwilioServer], kwargs):
+def run_conversation(agent_a: ChatAgent, agent_b: ChatAgent, tws: Optional[TwilioServer]):
     transcript = []
     while True:
         try:
